@@ -1,8 +1,9 @@
 {
-  "name": "firebot-plugin-template",
-  "pluginOutputName": "starterPlugin",
+  "name": "firebot-aimp",
+  "displayName": "AIMP",
+  "pluginOutputName": "oceanityAIMP",
   "version": "1.0.0",
-  "description": "A starter Firebot plugin",
+  "description": "Adds integrations with AIMP using the Fluke Remote Control plugin",
   "main": "",
   "scripts": {
     "build": "tsdown",
@@ -10,16 +11,19 @@
     "copy": "node ./scripts/copy-build.js",
     "test": "jest"
   },
-  "author": "ebiggz",
+  "author": "Oceanity",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@crowbartools/firebot-types": "^5.67.0-alpha23",
+    "@crowbartools/firebot-types": "^5.67.0-alpha28",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.19.21",
+    "@types/ws": "^8.18.1",
     "jest": "^30.0.0",
     "ts-jest": "^29.4.0",
     "tsdown": "^0.22.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "uuid": "^14.0.1",
+    "ws": "^8.21.0"
   },
   "volta": {
     "node": "24.10.0"
