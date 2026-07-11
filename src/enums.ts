@@ -24,12 +24,16 @@ export enum ToggleBooleanMode {
   Toggle = "toggle",
 }
 
-export enum FirebotEvents {
+export enum FirebotEvent {
   MuteChanged = "mute-changed",
   PlayerState = "player-state",
   Position = "position",
   RepeatChanged = "repeat-changed",
   ShuffleChanged = "shuffle-changed",
   TrackChanged = "track-changed",
+  CoverArtChanged = "cover-art-changed",
+  TitleChanged = "title-changed",
+  ArtistChanged = "artist-changed",
+  AlbumChanged = "album-changed",
   VolumeChanged = "volume-changed",
 }

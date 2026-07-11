@@ -46,7 +46,17 @@ export class AIMPRestClient {
   }
 
   async fetchPlayerInfo(): Promise<PlayerInfo | null> {
-    return await this.#fetch<PlayerInfo>(RestEndpoint.PlayerInfo);
+    const playerInfo = await this.#fetch<PlayerInfo>(RestEndpoint.PlayerInfo);
+    if (!playerInfo) {
+      return null;
+    }
+
+    const { position, duration, ...info } = playerInfo;
+    return {
+      ...info,
+      position: position / 1000,
+      duration: duration / 1000,
+    };
   }
 
   async fetchTrackInfo(): Promise<TrackInfo | null> {

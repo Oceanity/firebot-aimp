@@ -3,7 +3,7 @@
   "displayName": "AIMP",
   "pluginOutputName": "oceanityAIMP",
   "version": "1.0.0",
-  "description": "Adds integrations with AIMP using the Fluke Remote Control plugin",
+  "description": "Adds integrations with AIMP using the Fluke AIMP Remote Control plugin",
   "main": "",
   "scripts": {
     "build": "tsdown",
@@ -19,6 +19,7 @@
     "@types/node": "^22.19.21",
     "@types/ws": "^8.18.1",
     "jest": "^30.0.0",
+    "reconnecting-websocket": "^4.4.0",
     "ts-jest": "^29.4.0",
     "tsdown": "^0.22.0",
     "typescript": "^5.9.0",

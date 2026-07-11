@@ -1,6 +1,6 @@
 import { EventSource } from "@crowbartools/firebot-types";
 import * as packageJson from "../package.json";
-import { FirebotEvents } from "./enums";
+import { FirebotEvent } from "./enums";
 
 export const {
   displayName: AIMP_PLUGIN_NAME,
@@ -8,6 +8,8 @@ export const {
   author: AIMP_PLUGIN_AUTHOR,
   version: AIMP_PLUGIN_VERSION,
 } = packageJson;
+export const AIMP_PLUGIN_GIT_REPO_URL =
+  "https://github.com/Oceanity/firebot-aimp";
 
 export const AIMP_PLUGIN_ID = "oceanity:aimp";
 
@@ -20,42 +22,44 @@ export const AIMP_PLUGIN_EVENT_SOURCE: EventSource = {
   name: "AIMP",
   events: [
     {
-      id: FirebotEvents.PlayerState,
+      id: FirebotEvent.PlayerState,
       name: "Player State Changed",
       description: "When one or more aspects of the player state are changed",
     },
     {
-      id: FirebotEvents.Position,
+      id: FirebotEvent.Position,
       name: "Player Position Changed",
       description:
         "An event that is periodically called to update where the current position of the track is",
     },
     {
-      id: FirebotEvents.TrackChanged,
+      id: FirebotEvent.TrackChanged,
       name: "Track Changed",
       description: "When the currently playing track changes",
     },
     {
-      id: FirebotEvents.VolumeChanged,
+      id: FirebotEvent.VolumeChanged,
       name: "Volume Changed",
       description: "When the volume of the player changes",
     },
     {
-      id: FirebotEvents.MuteChanged,
+      id: FirebotEvent.MuteChanged,
       name: "Mute Changed",
       description: "When the player is muted or unmuted",
     },
     {
-      id: FirebotEvents.RepeatChanged,
+      id: FirebotEvent.RepeatChanged,
       name: "Repeat Changed",
       description: "When repeat is enabled or disabled",
     },
     {
-      id: FirebotEvents.ShuffleChanged,
+      id: FirebotEvent.ShuffleChanged,
       name: "ShuffleChanged",
       description: "When shuffle is enabled or disabled",
     },
   ],
 };
+
+export const AIMP_PLUGIN_RECONNECT_TIMEOUT_MS = 15000;
 
 export const HOSTNAME_REGEX = /^[a-zA-Z]+:\/\/([\w\.]+)(\/.+)?/;

@@ -1,7 +1,11 @@
 import firebot from "@crowbartools/firebot-types";
-import WebSocket from "ws";
-import { AIMP_PLUGIN_ID, HOSTNAME_REGEX } from "../constants";
-import { FirebotEvents } from "../enums";
+import ReconnectingWebSocket, { ErrorEvent } from "reconnecting-websocket";
+import {
+  AIMP_PLUGIN_ID,
+  AIMP_PLUGIN_RECONNECT_TIMEOUT_MS,
+  HOSTNAME_REGEX,
+} from "../constants";
+import { FirebotEvent } from "../enums";
 import { AIMPMessage } from "../types";
 import { AIMPState } from "./aimp-state";
 
@@ -9,7 +13,7 @@ export class AIMPWebsocketClient {
   readonly #state: AIMPState;
 
   #url: URL;
-  #socket: WebSocket | null = null;
+  #socket: ReconnectingWebSocket | null = null;
 
   constructor(state: AIMPState, hostname: string) {
     this.#state = state;
@@ -37,74 +41,121 @@ export class AIMPWebsocketClient {
 
   public async connect(): Promise<boolean> {
     try {
-      this.#socket = new WebSocket(this.#url);
+      this.disconnect();
 
-      this.#socket.on("message", async (data: WebSocket.Data) => {
-        const message = JSON.parse(data.toString()) as AIMPMessage;
+      firebot.logger.info("Connecting to AIMP WebSocket...");
 
-        firebot.logger.info(JSON.stringify(message));
+      this.#socket = new ReconnectingWebSocket(this.#url.toString(), [], {
+        connectionTimeout: AIMP_PLUGIN_RECONNECT_TIMEOUT_MS,
+      });
+
+      this.#socket.onopen = async () => {
+        firebot.logger.info("Connected to AIMP WebSocket Server!");
+      };
+
+      this.#socket.onclose = () => {
+        firebot.logger.warn(
+          `AIMP disconnected, attempting to reconnect in ${Math.floor(AIMP_PLUGIN_RECONNECT_TIMEOUT_MS / 1000)} seconds...`,
+        );
+      };
+
+      this.#socket.onerror = (event: ErrorEvent) => {
+        firebot.logger.warn(
+          `Could not connect to AIMP WebSocket, reason: ${event.message}`,
+        );
+      };
+
+      this.#socket.onmessage = async (event: MessageEvent) => {
+        const message = JSON.parse(event.data) as AIMPMessage;
 
         switch (message.event) {
-          case "track_changed":
+          case "track_changed": {
+            firebot.logger.info(JSON.stringify(message));
+
             await this.#state.updateTrack(message);
 
             firebot.logger.info(`Track Cover Id: ${this.#state.coverId}`);
 
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvents.TrackChanged, {
+            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.TrackChanged, {
               // TODO: Meta
             });
-            break;
-          case "player_state":
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvents.PlayerState, {
-              // TODO: Meta
-            });
-            break;
-          case "position":
-            this.#state.updatePosition(message.position);
 
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvents.Position, {
+            return;
+          }
+
+          case "player_state": {
+            firebot.logger.info(JSON.stringify(message));
+
+            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.PlayerState, {
               // TODO: Meta
             });
-            break;
-          case "volume_changed":
-            firebot.events.trigger(
-              AIMP_PLUGIN_ID,
-              FirebotEvents.VolumeChanged,
-              {
-                // TODO: Meta
-              },
+
+            return;
+          }
+
+          case "position": {
+            const newPosition = await this.#state.updatePosition(
+              message.position,
+              true,
             );
-            break;
-          case "mute_changed":
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvents.MuteChanged, {
+
+            firebot.logger.info(
+              `Position: ${newPosition} / ${this.#state.playerInfo?.duration}`,
+            );
+
+            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.Position, {
               // TODO: Meta
             });
-            break;
-          case "shuffle_changed":
+
+            return;
+          }
+
+          case "volume_changed": {
+            firebot.logger.info(JSON.stringify(message));
+
+            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.VolumeChanged, {
+              // TODO: Meta
+            });
+
+            return;
+          }
+
+          case "mute_changed": {
+            firebot.logger.info(JSON.stringify(message));
+
+            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.MuteChanged, {
+              // TODO: Meta
+            });
+
+            return;
+          }
+
+          case "shuffle_changed": {
             firebot.events.trigger(
               AIMP_PLUGIN_ID,
-              FirebotEvents.ShuffleChanged,
+              FirebotEvent.ShuffleChanged,
               {
-                // TODO: Meta
+                aimpPlayerShuffle: message.shuffle,
               },
             );
-            break;
-          case "repeat_changed":
-            firebot.events.trigger(
-              AIMP_PLUGIN_ID,
-              FirebotEvents.RepeatChanged,
-              {
-                // TODO: Meta
-              },
-            );
-            break;
+
+            return;
+          }
+
+          case "repeat_changed": {
+            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.RepeatChanged, {
+              aimpPlayerRepeat: message.repeat,
+            });
+
+            return;
+          }
         }
-      });
+      };
 
       return true;
     } catch (error) {
       firebot.logger.error(
-        "Could not connect to Fluke WebSocket Server",
+        `Could not connect to AIMP WebSocket Server, retrying in ${Math.floor(AIMP_PLUGIN_RECONNECT_TIMEOUT_MS / 1000)} seconds...`,
         error,
       );
     }
@@ -115,8 +166,12 @@ export class AIMPWebsocketClient {
     if (!this.#socket) {
       return;
     }
+
     try {
-      this.#socket.removeAllListeners();
+      this.#socket.onopen = null;
+      this.#socket.onclose = null;
+      this.#socket.onerror = null;
+      this.#socket.onmessage = null;
 
       this.#socket.close();
     } catch (error) {

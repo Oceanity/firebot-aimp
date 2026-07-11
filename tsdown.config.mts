@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { defineConfig } from "tsdown";
 
 const { pluginOutputName } = JSON.parse(
-  readFileSync(new URL("./package.json", import.meta.url), "utf-8")
+  readFileSync(new URL("./package.json", import.meta.url), "utf-8"),
 );
 
 export default defineConfig({
@@ -11,6 +11,9 @@ export default defineConfig({
     [pluginOutputName]: "./src/main.ts",
   },
   outDir: "./dist",
+  outputOptions: {
+    exports: "named",
+  },
   platform: "node",
   format: "cjs",
   // Emit a `.js` file (Firebot expects a plain `.js` plugin file).
@@ -30,8 +33,9 @@ export default defineConfig({
   },
   // No type declarations needed for a plugin bundle.
   dts: false,
-  // Allow importing .html files as strings
+  // Allow importing .html files as strings and .webp as binary
   loader: {
-    ".html": "text"
+    ".html": "text",
+    ".webp": "binary",
   },
 });

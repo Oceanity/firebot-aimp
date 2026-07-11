@@ -1,16 +1,26 @@
 import { PluginHttpRouteDefinition } from "@crowbartools/firebot-types";
+import defaultImage from "../assets/default-album-art.webp";
 import { aimp } from "./main";
 
 export const AIMPHttpRoutes: PluginHttpRouteDefinition = {
   prefix: "/oceanity/aimp",
   routes: [
     {
-      path: "/cover",
+      path: "/cover/:id",
       method: "GET",
-      handler: (req, res) => {
-        const { id } = req.query;
+      handler: async (req, res) => {
+        const id =
+          typeof req.params.id === "string"
+            ? req.params.id
+            : req.params.id.shift();
 
-        const cover = aimp.getCover(id as string);
+        if (id === "default") {
+          res.setHeader("Content-Type", "image/webp");
+          res.send(defaultImage);
+          return;
+        }
+
+        const cover = aimp.getCover(id);
         if (!cover) {
           res.send(null);
           return;

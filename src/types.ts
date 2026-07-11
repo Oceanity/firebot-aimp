@@ -105,6 +105,7 @@ export interface PlayerStateMessage extends BaseMessage {
 export interface PositionMessage extends BaseMessage {
   event: "position";
   position: number;
+  seeked?: boolean; // For some reason if seeked is true, position is seconds as float, not ms, may be upstream bug
 }
 
 export interface VolumeChangedMessage extends BaseMessage {
