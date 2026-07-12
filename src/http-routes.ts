@@ -1,5 +1,5 @@
 import { PluginHttpRouteDefinition } from "@crowbartools/firebot-types";
-import defaultImage from "../assets/default-album-art.webp";
+import defaultCoverArt from "../assets/default-cover-art.webp";
 import { aimp } from "./main";
 
 export const AIMPHttpRoutes: PluginHttpRouteDefinition = {
@@ -16,11 +16,11 @@ export const AIMPHttpRoutes: PluginHttpRouteDefinition = {
 
         if (id === "default") {
           res.setHeader("Content-Type", "image/webp");
-          res.send(defaultImage);
+          res.send(defaultCoverArt);
           return;
         }
 
-        const cover = aimp.getCover(id);
+        const cover = aimp.track.getCoverArt(id);
         if (!cover) {
           res.send(null);
           return;

@@ -1,45 +1,102 @@
-import os from "os";
+import {
+  AIMP_PLUGIN_PLAYER_VARIABLE_PREFIX as PLAYER_PREFIX,
+  AIMP_PLUGIN_TRACK_VARIABLE_PREFIX as TRACK_PREFIX,
+} from "./constants";
+import { PlaybackStateString, StoredPlayerInfo } from "./types";
 
-// export function getPlayerMetadata(
-//   player: PlayerInfo,
-//   prefix: string = "aimpPlayer"
-// ): Record<string, string> {
-//   const output: Record<string, string> = {};
+//#region Player Metadata
 
-//     duration: number;
-//     mute: boolean;
-//     position: number;
-//     repeat: boolean;
-//     shuffle: boolean;
-//     state: PlaybackState;
-//   const definitions: [string, string][] = [
-//     ["Position", ""
-
-//   ]
-// }
-
-export function getCoverArtAddress(coverId: string | null): string | null {
-  if (!coverId) {
-    return null;
-  }
-
-  const ip = getLocalIpAddress();
-
-  return ip ? `http://${ip}:7472/plugins/oceanity/aimp/cover/${coverId}` : null;
+export function getPositionMetadata(playerInfo: StoredPlayerInfo) {
+  return {
+    [`${PLAYER_PREFIX}Position`]: playerInfo.position,
+    [`${PLAYER_PREFIX}PositionSeconds`]: playerInfo.positionSeconds,
+    [`${PLAYER_PREFIX}Duration`]: playerInfo.duration,
+    [`${PLAYER_PREFIX}DurationSeconds`]: playerInfo.durationSeconds,
+    [`${PLAYER_PREFIX}ProgressPercent`]: playerInfo.progressPercent,
+  };
 }
 
-export function getLocalIpAddress(): string | null {
-  try {
-    const networkInterfaces = os.networkInterfaces();
-    for (const interfaceName of Object.keys(networkInterfaces)) {
-      const addresses = networkInterfaces[interfaceName];
-      for (const address of addresses ?? []) {
-        // Look for IPv4 addresses that are not internal (loopback)
-        if (address.family === "IPv4" && !address.internal) {
-          return address.address;
-        }
-      }
-    }
-  } catch {}
-  return null;
+export function getVolumeMetadata(volume: number) {
+  return {
+    [`${PLAYER_PREFIX}Volume`]: volume,
+  };
+}
+
+export function getMuteMetadata(mute: boolean) {
+  return {
+    [`${PLAYER_PREFIX}IsMuted`]: mute,
+  };
+}
+
+export function getRepeatMetadata(repeat: boolean) {
+  return {
+    [`${PLAYER_PREFIX}IsRepeating`]: repeat,
+  };
+}
+
+export function getShuffleMetadata(shuffle: boolean) {
+  return {
+    [`${PLAYER_PREFIX}IsShuffled`]: shuffle,
+  };
+}
+
+export function getStateMetadata(state: PlaybackStateString) {
+  return {
+    [`${PLAYER_PREFIX}State`]: state,
+  };
+}
+
+//#endregion
+
+//#region Track Metadata
+
+export function getTitleMetadata(title: string) {
+  return {
+    [`${TRACK_PREFIX}Title`]: title,
+  };
+}
+
+export function getArtistMetadata(artist: string) {
+  return {
+    [`${TRACK_PREFIX}Artist`]: artist,
+  };
+}
+
+export function getAlbumMetadata(album: string) {
+  return {
+    [`${TRACK_PREFIX}Album`]: album,
+  };
+}
+
+export function getGenreMetadata(genre: string) {
+  return {
+    [`${TRACK_PREFIX}Genre`]: genre,
+  };
+}
+
+export function getCoverArtMetadata(coverArtUrl: string) {
+  return {
+    [`${TRACK_PREFIX}CoverArtUrl`]: coverArtUrl,
+  };
+}
+
+//#endregion
+
+export function getImageDataUri(
+  mimeType: string,
+  arrayBuffer: ArrayBuffer,
+): string {
+  return `data:${mimeType};base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+}
+
+export function formatDurationString(seconds: number): string {
+  const rounded = Math.round(seconds);
+  const hourString = rounded >= 3600 ? `${Math.floor(rounded / 3600)}:` : "";
+  const minuteString = `${Math.floor(rounded / 60)}:`.padStart(
+    !!hourString.length ? 2 : 1,
+    "0",
+  );
+  const secondString = `${rounded % 60}`.padStart(2, "0");
+
+  return `${hourString}${minuteString}${secondString}`;
 }

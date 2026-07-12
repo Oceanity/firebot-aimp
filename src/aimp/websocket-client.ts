@@ -1,21 +1,26 @@
 import firebot from "@crowbartools/firebot-types";
 import ReconnectingWebSocket, { ErrorEvent } from "reconnecting-websocket";
-import {
-  AIMP_PLUGIN_ID,
-  AIMP_PLUGIN_RECONNECT_TIMEOUT_MS,
-  HOSTNAME_REGEX,
-} from "../constants";
-import { FirebotEvent } from "../enums";
+import { TypedEmitter } from "tiny-typed-emitter";
+import { AIMP_PLUGIN_RECONNECT_TIMEOUT_MS, HOSTNAME_REGEX } from "../constants";
+import { aimp } from "../main";
 import { AIMPMessage } from "../types";
 import { AIMPState } from "./aimp-state";
 
-export class AIMPWebsocketClient {
+type SocketEvents = {
+  ["connected"]: (meta: Record<string, any>) => void;
+  ["disconnected"]: () => void;
+};
+
+export class AIMPWebsocketClient extends TypedEmitter<SocketEvents> {
   readonly #state: AIMPState;
 
   #url: URL;
   #socket: ReconnectingWebSocket | null = null;
+  #isConnected: boolean = false;
 
   constructor(state: AIMPState, hostname: string) {
+    super();
+
     this.#state = state;
 
     if (!HOSTNAME_REGEX.test(hostname)) {
@@ -39,6 +44,10 @@ export class AIMPWebsocketClient {
     }
   }
 
+  public get isConnected(): boolean {
+    return this.#isConnected;
+  }
+
   public async connect(): Promise<boolean> {
     try {
       this.disconnect();
@@ -51,18 +60,33 @@ export class AIMPWebsocketClient {
 
       this.#socket.onopen = async () => {
         firebot.logger.info("Connected to AIMP WebSocket Server!");
+        this.#isConnected = true;
+
+        const playerInfo = await aimp.rest.fetchPlayerState();
+        if (!playerInfo) {
+          return;
+        }
+
+        // Fetch latest data
+        await aimp.player.initialize();
       };
 
       this.#socket.onclose = () => {
         firebot.logger.warn(
           `AIMP disconnected, attempting to reconnect in ${Math.floor(AIMP_PLUGIN_RECONNECT_TIMEOUT_MS / 1000)} seconds...`,
         );
+
+        this.#isConnected = false;
+        this.emit("disconnected");
       };
 
       this.#socket.onerror = (event: ErrorEvent) => {
         firebot.logger.warn(
           `Could not connect to AIMP WebSocket, reason: ${event.message}`,
         );
+
+        this.#isConnected = false;
+        this.emit("disconnected");
       };
 
       this.#socket.onmessage = async (event: MessageEvent) => {
@@ -70,84 +94,33 @@ export class AIMPWebsocketClient {
 
         switch (message.event) {
           case "track_changed": {
-            firebot.logger.info(JSON.stringify(message));
-
-            await this.#state.updateTrack(message);
-
-            firebot.logger.info(`Track Cover Id: ${this.#state.coverId}`);
-
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.TrackChanged, {
-              // TODO: Meta
-            });
-
-            return;
+            return await this.#state.track.updateInfo(message);
           }
 
           case "player_state": {
-            firebot.logger.info(JSON.stringify(message));
-
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.PlayerState, {
-              // TODO: Meta
-            });
-
-            return;
+            return this.#state.player.updateState(message.state);
           }
 
           case "position": {
-            const newPosition = await this.#state.updatePosition(
-              message.position,
-              true,
+            return await this.#state.player.updatePosition(
+              message.position / 1000,
             );
-
-            firebot.logger.info(
-              `Position: ${newPosition} / ${this.#state.playerInfo?.duration}`,
-            );
-
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.Position, {
-              // TODO: Meta
-            });
-
-            return;
           }
 
           case "volume_changed": {
-            firebot.logger.info(JSON.stringify(message));
-
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.VolumeChanged, {
-              // TODO: Meta
-            });
-
-            return;
+            return await this.#state.player.updateVolume(message.volume);
           }
 
           case "mute_changed": {
-            firebot.logger.info(JSON.stringify(message));
-
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.MuteChanged, {
-              // TODO: Meta
-            });
-
-            return;
+            return await this.#state.player.updateMute(message.mute);
           }
 
           case "shuffle_changed": {
-            firebot.events.trigger(
-              AIMP_PLUGIN_ID,
-              FirebotEvent.ShuffleChanged,
-              {
-                aimpPlayerShuffle: message.shuffle,
-              },
-            );
-
-            return;
+            return await this.#state.player.updateShuffle(message.shuffle);
           }
 
           case "repeat_changed": {
-            firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.RepeatChanged, {
-              aimpPlayerRepeat: message.repeat,
-            });
-
-            return;
+            return await this.#state.player.updateRepeat(message.repeat);
           }
         }
       };
@@ -174,6 +147,8 @@ export class AIMPWebsocketClient {
       this.#socket.onmessage = null;
 
       this.#socket.close();
+
+      this.#isConnected = false;
     } catch (error) {
       firebot.logger.error("Could not disconnect AIMP Websocket Client", error);
     }

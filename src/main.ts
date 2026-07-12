@@ -3,15 +3,17 @@ import { AIMPState } from "./aimp/aimp-state";
 import {
   AIMP_PLUGIN_AUTHOR,
   AIMP_PLUGIN_DESCRIPTION,
-  AIMP_PLUGIN_EVENT_SOURCE,
   AIMP_PLUGIN_GIT_REPO_URL,
   AIMP_PLUGIN_ICON_BACKGROUND,
   AIMP_PLUGIN_ICON_DATA_URI,
   AIMP_PLUGIN_NAME,
   AIMP_PLUGIN_VERSION,
 } from "./constants";
-import { AllAIMPEffectTypes } from "./effects";
+import { AllAIMPEffectTypes as AllAIMPEffects } from "./effects";
+import { AIMPPluginEventSource } from "./event-source";
 import { AIMPHttpRoutes } from "./http-routes";
+import { AllAIMPOverlayWidgets } from "./overlay-widgets";
+import { AllAIMPVariables } from "./replace-variables";
 import { AIMPPluginSettings } from "./types";
 
 export let aimp: AIMPState;
@@ -40,9 +42,11 @@ const plugin: Plugin<AIMPPluginSettings> = {
     },
   ],
   registers: {
-    effects: AllAIMPEffectTypes,
-    eventSources: [AIMP_PLUGIN_EVENT_SOURCE],
+    effects: AllAIMPEffects,
+    eventSources: [AIMPPluginEventSource],
     httpRoutes: AIMPHttpRoutes,
+    overlayWidgets: AllAIMPOverlayWidgets,
+    variables: AllAIMPVariables,
   },
   onLoad: async (context) => {
     await connect(context);

@@ -1,48 +1,42 @@
 import firebot, { PluginContext } from "@crowbartools/firebot-types";
 import { networkInterfaces } from "os";
-import { v4 as uuid } from "uuid";
-import { AIMP_PLUGIN_ID } from "../constants";
-import { FirebotEvent } from "../enums";
-import {
-  AIMPPluginSettings,
-  PlayerInfo,
-  StoredCover,
-  TrackInfo,
-} from "../types";
+import { TypedEmitter } from "tiny-typed-emitter";
+import { AIMPPluginSettings } from "../types";
+import { FirebotRemote } from "./firebot-remote";
+import { PlayerService } from "./player-service";
 import { AIMPRestClient } from "./rest-client";
+import { TrackService } from "./track-service";
 import { AIMPWebsocketClient } from "./websocket-client";
 
-export class AIMPState {
+type Events = {
+  ["ready"]: (meta: Record<string, any>) => void;
+};
+
+export class AIMPState extends TypedEmitter<Events> {
   readonly #rest: AIMPRestClient;
   readonly #socket: AIMPWebsocketClient;
+  readonly #player: PlayerService;
+  readonly #track: TrackService;
+  readonly #remote: FirebotRemote;
 
-  #playerInfo: PlayerInfo | null = null;
-  #position: number = -1;
-  #trackInfo: TrackInfo | null = null;
-  #coverId: string | null = null;
-  #covers: ({ id: string } & StoredCover)[] = [];
-  #firebotUrl: URL | null = null;
+  #firebotUrl: URL;
 
   constructor(context: PluginContext<AIMPPluginSettings>) {
+    super();
+
     this.#rest = new AIMPRestClient(this, context.parameters.hostname);
     this.#socket = new AIMPWebsocketClient(this, context.parameters.hostname);
+    this.#player = new PlayerService(this);
+    this.#track = new TrackService(this);
+    this.#remote = new FirebotRemote(this);
 
-    try {
-      const interfaces = networkInterfaces();
-      for (const interfaceName of Object.keys(interfaces)) {
-        const connections = interfaces[interfaceName];
-        for (const connection of connections ?? []) {
-          // Look for IPv4 addresses that are not internal (loopback)
-          if (connection.family === "IPv4" && !connection.internal) {
-            this.#firebotUrl = new URL(`http://${connection.address}:7472`);
-            firebot.logger.info(this.#firebotUrl.toString());
-          }
-        }
-      }
-    } catch {
-      firebot.logger.warn("Could not get Firebot's local IP Address");
-      this.#firebotUrl = null;
-    }
+    this.#firebotUrl = this.#getLocalAddress();
+
+    this.#socket.on("connected", this.#onConnected);
+  }
+
+  public get firebotUrl(): URL | null {
+    return this.#firebotUrl;
   }
 
   public get rest() {
@@ -53,20 +47,18 @@ export class AIMPState {
     return this.#socket;
   }
 
-  public get playerInfo() {
-    return this.#playerInfo;
+  public get player() {
+    return this.#player;
   }
 
-  public get position() {
-    return this.#position;
+  public get track() {
+    return this.#track;
   }
 
-  public get trackInfo() {
-    return this.#trackInfo;
-  }
-
-  public get coverId() {
-    return this.#coverId;
+  public get meta(): Record<string, any> {
+    return {
+      ...this.#player.meta,
+    };
   }
 
   public async init() {
@@ -74,99 +66,36 @@ export class AIMPState {
   }
 
   public async close() {
+    this.#remote.close();
     this.#socket.disconnect();
   }
 
-  public updatePlayer(playerInfo: PlayerInfo) {
-    this.#playerInfo = playerInfo;
-  }
+  #onConnected = async () => {
+    await this.#player.initialize();
+    await this.#track.initialize();
 
-  public async updatePosition(
-    position: number,
-    isInMilliseconds: boolean,
-    forceEvent?: boolean,
-  ): Promise<number> {
-    let fetched = false;
-    if (!this.#playerInfo) {
-      this.#playerInfo = await this.#rest.fetchPlayerInfo();
+    this.emit("ready", {
+      ...this.#player.meta,
+      ...this.#track.meta,
+    });
+  };
 
-      fetched = true;
-
-      if (!this.#playerInfo) {
-        firebot.logger.warn(
-          "Could not fetch current player info during update position",
-        );
-        return -1;
+  #getLocalAddress = (): URL => {
+    try {
+      const interfaces = networkInterfaces();
+      for (const interfaceName of Object.keys(interfaces)) {
+        const connections = interfaces[interfaceName];
+        for (const connection of connections ?? []) {
+          // Look for IPv4 addresses that are not internal (loopback)
+          if (connection.family === "IPv4" && !connection.internal) {
+            return new URL(`http://${connection.address}:7472`);
+          }
+        }
       }
+    } catch {
+      firebot.logger.warn("Could not get Firebot's local IP Address");
     }
 
-    // Converts MS to seconds because the plugin is a bit loosey-goosey on what it returns
-    const normalizedPosition = isInMilliseconds
-      ? position / 1000
-      : Math.round(position * 100) / 100;
-
-    // If changed, update and trigger event
-    if (
-      forceEvent ||
-      fetched ||
-      this.#playerInfo.position !== normalizedPosition
-    ) {
-      this.#playerInfo.position = normalizedPosition;
-      this.#position = normalizedPosition;
-
-      firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.CoverArtChanged, {
-        aimpPlayerPosition: normalizedPosition,
-        aimpPlayerDuration: this.#playerInfo.duration,
-        aimpPlayerProgressPercent:
-          normalizedPosition / this.#playerInfo.duration,
-      });
-    }
-
-    return normalizedPosition;
-  }
-
-  public async updateTrack(trackInfo: TrackInfo) {
-    this.#trackInfo = trackInfo;
-
-    await this.updateCoverArt();
-  }
-
-  public async updateCoverArt() {
-    let newCoverId: string | null = null;
-
-    const cover = await this.#rest.fetchTrackCover();
-
-    if (cover) {
-      const existing = this.#covers.find(
-        (storedCover) => storedCover.hash === cover?.hash,
-      );
-      if (existing) {
-        newCoverId = existing.id;
-      } else {
-        newCoverId = uuid();
-        this.#covers.push({ id: newCoverId, ...cover });
-      }
-    }
-
-    if (this.#coverId !== newCoverId) {
-      this.#coverId = newCoverId;
-      const address = this.#getCoverArtAddress(this.#coverId);
-
-      firebot.logger.info(`New Cover Art! ${address}`);
-
-      firebot.events.trigger(AIMP_PLUGIN_ID, FirebotEvent.CoverArtChanged, {
-        aimpTrackCoverArtUrl: address,
-      });
-    }
-  }
-
-  public getCover(id?: string): StoredCover | null {
-    return this.#covers.find((cover) => cover.id === id) ?? null;
-  }
-
-  #getCoverArtAddress(id?: string | null): string | null {
-    return this.#firebotUrl
-      ? `${this.#firebotUrl}plugins/oceanity/aimp/cover/${id ?? "default"}`
-      : null;
-  }
+    return new URL("http://localhost:7472");
+  };
 }

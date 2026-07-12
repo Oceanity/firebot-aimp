@@ -8,6 +8,15 @@ export enum PlaybackState {
   Playing = 2,
 }
 
+export type PlaybackStateString = "stopped" | "paused" | "playing";
+
+export const PlaybackStateStrings: Record<PlaybackState, PlaybackStateString> =
+  Object.freeze({
+    [PlaybackState.Stopped]: "stopped",
+    [PlaybackState.Paused]: "paused",
+    [PlaybackState.Playing]: "playing",
+  });
+
 export interface PlayerInfo {
   duration: number;
   mute: boolean;
@@ -15,6 +24,7 @@ export interface PlayerInfo {
   repeat: boolean;
   shuffle: boolean;
   state: PlaybackState;
+  volume: number;
 }
 
 export type VolumeResponse = {
@@ -37,6 +47,37 @@ export type StoredCover = {
   mimeType: string;
   data: Buffer;
 };
+
+//#region Firebot Data
+
+export type StoredPlayerInfoKey = Extract<keyof StoredPlayerInfo, string>;
+export type StoredPlayerInfo = {
+  position: string;
+  positionSeconds: number;
+  duration: string;
+  durationSeconds: number;
+  progressPercent: number;
+  volume: number;
+  mute: boolean;
+  repeat: boolean;
+  shuffle: boolean;
+  state: PlaybackStateString;
+};
+
+export type StoredTrackInfoKey = Extract<keyof StoredTrackInfo, string>;
+export type StoredTrackInfo = {
+  title: string;
+  artist: string;
+  album: string;
+  coverArtId: string | null;
+  genre: string;
+  rating: number;
+  playCount: number;
+  bitrate: number;
+  sampleRate: number;
+};
+
+//#endregion
 
 //#region Rest Responses
 
@@ -99,7 +140,7 @@ export interface TrackChangedMessage extends BaseMessage {
 
 export interface PlayerStateMessage extends BaseMessage {
   event: "player_state";
-  position: PlaybackState;
+  state: PlaybackState;
 }
 
 export interface PositionMessage extends BaseMessage {

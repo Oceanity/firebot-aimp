@@ -25,11 +25,13 @@ export enum ToggleBooleanMode {
 }
 
 export enum FirebotEvent {
-  MuteChanged = "mute-changed",
+  Connected = "connected",
+  Disconnected = "disconnected",
+  MuteToggled = "mute-changed",
   PlayerState = "player-state",
-  Position = "position",
-  RepeatChanged = "repeat-changed",
-  ShuffleChanged = "shuffle-changed",
+  PositionChanged = "position-position",
+  RepeatToggled = "repeat-changed",
+  ShuffleToggled = "shuffle-changed",
   TrackChanged = "track-changed",
   CoverArtChanged = "cover-art-changed",
   TitleChanged = "title-changed",

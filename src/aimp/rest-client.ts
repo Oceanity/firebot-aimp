@@ -4,7 +4,7 @@ import { HOSTNAME_REGEX } from "../constants";
 import { ChangePlaybackMode, RestEndpoint, ToggleBooleanMode } from "../enums";
 import {
   PlaybackState,
-  PlayerInfo,
+  PlayerInfo as PlayerState,
   SetVolumeResponse,
   StoredCover,
   ToggleBooleanResponse,
@@ -45,8 +45,8 @@ export class AIMPRestClient {
     }
   }
 
-  async fetchPlayerInfo(): Promise<PlayerInfo | null> {
-    const playerInfo = await this.#fetch<PlayerInfo>(RestEndpoint.PlayerInfo);
+  async fetchPlayerState(): Promise<PlayerState | null> {
+    const playerInfo = await this.#fetch<PlayerState>(RestEndpoint.PlayerInfo);
     if (!playerInfo) {
       return null;
     }
@@ -63,7 +63,7 @@ export class AIMPRestClient {
     return await this.#fetch<TrackInfo>(RestEndpoint.TrackInfo);
   }
 
-  async fetchTrackCover(): Promise<StoredCover | null> {
+  async fetchCoverArt(): Promise<StoredCover | null> {
     try {
       const response = await fetch(
         this.#getEndpointUrl(RestEndpoint.TrackCover),
@@ -108,7 +108,7 @@ export class AIMPRestClient {
         return response?.status === "ok";
       }
 
-      const player = await this.fetchPlayerInfo();
+      const player = await this.fetchPlayerState();
 
       if (!player) {
         return false;
@@ -224,7 +224,7 @@ export class AIMPRestClient {
 
   #toggleBoolean = async <T extends ToggleBooleanResponse>(
     endpoint: RestEndpoint,
-    key: keyof PlayerInfo,
+    key: keyof PlayerState,
     mode: ToggleBooleanMode,
   ): Promise<boolean> => {
     if (mode === ToggleBooleanMode.Toggle) {
@@ -233,7 +233,7 @@ export class AIMPRestClient {
       return !!response?.success;
     }
 
-    const player = await this.fetchPlayerInfo();
+    const player = await this.fetchPlayerState();
 
     if (!player || typeof player[key] !== "boolean") {
       return false;
