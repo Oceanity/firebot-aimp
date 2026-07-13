@@ -2,6 +2,13 @@ import { EventSource } from "@crowbartools/firebot-types";
 import { AIMP_PLUGIN_ID } from "./constants";
 import { FirebotEvent } from "./enums";
 
+const trackDataChangeDefinitions: [FirebotEvent, string][] = [
+  [FirebotEvent.TitleChanged, "Title"],
+  [FirebotEvent.ArtistChanged, "Artist"],
+  [FirebotEvent.AlbumChanged, "AlbumChanged"],
+  [FirebotEvent.CoverArtChanged, "CoverArtChanged"],
+];
+
 export const AIMPPluginEventSource: EventSource = {
   id: AIMP_PLUGIN_ID,
   name: "AIMP",
@@ -54,11 +61,14 @@ export const AIMPPluginEventSource: EventSource = {
       name: "Shuffle Toggled",
       description: "When shuffle is enabled or disabled",
     },
-    {
-      id: FirebotEvent.CoverArtChanged,
-      name: "Cover Art Changed",
-      description:
-        "When the cover art is different between tracks during a track change",
-    },
+    //#region Track changes
+
+    ...trackDataChangeDefinitions.map(([event, property]) => ({
+      id: event,
+      name: `${property} Changed`,
+      description: `When the ${property.toLowerCase()} is different between tracks during a track change`,
+    })),
+
+    //#endregion
   ],
 };

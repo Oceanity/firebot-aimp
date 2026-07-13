@@ -14,15 +14,10 @@ export const AIMPHttpRoutes: PluginHttpRouteDefinition = {
             ? req.params.id
             : req.params.id.shift();
 
-        if (id === "default") {
-          res.setHeader("Content-Type", "image/webp");
-          res.send(defaultCoverArt);
-          return;
-        }
-
         const cover = aimp.track.getCoverArt(id);
         if (!cover) {
-          res.send(null);
+          res.setHeader("Content-Type", "image/webp");
+          res.send(defaultCoverArt);
           return;
         }
 

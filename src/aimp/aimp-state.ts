@@ -74,6 +74,13 @@ export class AIMPState extends TypedEmitter<Events> {
     await this.#player.initialize();
     await this.#track.initialize();
 
+    firebot.logger.info(
+      JSON.stringify({
+        ...this.#player.meta,
+        ...this.#track.meta,
+      }),
+    );
+
     this.emit("ready", {
       ...this.#player.meta,
       ...this.#track.meta,

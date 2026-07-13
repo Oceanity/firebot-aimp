@@ -7,7 +7,7 @@ import { AIMPMessage } from "../types";
 import { AIMPState } from "./aimp-state";
 
 type SocketEvents = {
-  ["connected"]: (meta: Record<string, any>) => void;
+  ["connected"]: () => void;
   ["disconnected"]: () => void;
 };
 
@@ -68,7 +68,9 @@ export class AIMPWebsocketClient extends TypedEmitter<SocketEvents> {
         }
 
         // Fetch latest data
-        await aimp.player.initialize();
+        // await aimp.player.initialize();
+
+        this.emit("connected");
       };
 
       this.#socket.onclose = () => {

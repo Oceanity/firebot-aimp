@@ -10,6 +10,7 @@ import { AIMPState } from "./aimp-state";
 export class FirebotRemote {
   readonly #state: AIMPState;
 
+  #unbindAIMPFirebotEvents: () => void;
   #unbindSocketFirebotEvents: () => void;
   #unbindPlayerFirebotEvents: () => void;
   #unbindTrackFirebotEvents: () => void;
@@ -17,36 +18,44 @@ export class FirebotRemote {
   constructor(state: AIMPState) {
     this.#state = state;
 
+    this.#unbindAIMPFirebotEvents = this.#bindFirebotEvent(this.#state, {
+      ready: {
+        event: FirebotEvent.Connected,
+        additionalHandlers: [this.#updateCoverArtOverlays],
+      },
+    });
+
     this.#unbindSocketFirebotEvents = this.#bindFirebotEvent(
       this.#state.socket,
       {
-        connected: FirebotEvent.Connected,
-        disconnected: FirebotEvent.Disconnected,
+        disconnected: { event: FirebotEvent.Disconnected },
       },
     );
 
     this.#unbindPlayerFirebotEvents = this.#bindFirebotEvent(
       this.#state.player,
       {
-        "position-updated": FirebotEvent.PositionChanged,
-        "volume-updated": FirebotEvent.VolumeChanged,
-        "mute-updated": FirebotEvent.MuteToggled,
-        "repeat-updated": FirebotEvent.RepeatToggled,
-        "shuffle-updated": FirebotEvent.ShuffleToggled,
+        "position-updated": { event: FirebotEvent.PositionChanged },
+        "volume-updated": { event: FirebotEvent.VolumeChanged },
+        "mute-updated": { event: FirebotEvent.MuteToggled },
+        "repeat-updated": { event: FirebotEvent.RepeatToggled },
+        "shuffle-updated": { event: FirebotEvent.ShuffleToggled },
       },
     );
 
     this.#unbindTrackFirebotEvents = this.#bindFirebotEvent(this.#state.track, {
-      "title-updated": FirebotEvent.TitleChanged,
-      "artist-updated": FirebotEvent.ArtistChanged,
-      "album-updated": FirebotEvent.AlbumChanged,
-      "cover-art-updated": FirebotEvent.CoverArtChanged,
+      "title-updated": { event: FirebotEvent.TitleChanged },
+      "artist-updated": { event: FirebotEvent.ArtistChanged },
+      "album-updated": { event: FirebotEvent.AlbumChanged },
+      "cover-art-updated": {
+        event: FirebotEvent.CoverArtChanged,
+        additionalHandlers: [this.#updateCoverArtOverlays],
+      },
     });
-
-    this.#state.track.on("cover-art-updated", this.#onCoverArtChanged);
   }
 
   public close() {
+    this.#unbindAIMPFirebotEvents();
     this.#unbindSocketFirebotEvents();
     this.#unbindPlayerFirebotEvents();
     this.#unbindTrackFirebotEvents();
@@ -54,43 +63,66 @@ export class FirebotRemote {
 
   //#endregion
 
-  #onCoverArtChanged = (meta: Record<string, unknown>) => {
+  #bindFirebotEvent = <T extends TypedEmitter<any>>(
+    emitter: T,
+    mapping: Record<
+      string,
+      {
+        event: FirebotEvent;
+        additionalHandlers?: Array<(meta?: Record<string, unknown>) => void>;
+      }
+    >,
+  ) => {
+    const handlerMap = new Map<
+      string,
+      Array<(meta?: Record<string, unknown>) => void>
+    >();
+
+    for (const [event, data] of Object.entries(mapping)) {
+      const handlers: Array<() => void> = [];
+      const firebotEvent = (meta?: Record<string, unknown>) =>
+        firebot.events.trigger(AIMP_PLUGIN_ID, data.event, meta);
+      emitter.on(event, firebotEvent);
+      handlers.push(firebotEvent);
+
+      if (data.additionalHandlers) {
+        for (const extraHandler of data.additionalHandlers) {
+          emitter.on(event, extraHandler);
+          handlers.push(extraHandler);
+        }
+      }
+
+      handlerMap.set(event, handlers);
+    }
+
+    return () => {
+      for (const [event, handlers] of handlerMap) {
+        for (const handler of handlers) {
+          emitter.off(event, handler);
+        }
+      }
+    };
+  };
+
+  #updateCoverArtOverlays = (meta?: Record<string, unknown>) => {
+    if (!meta || !meta.aimpTrackCoverArtUrl) {
+      return;
+    }
+
+    firebot.logger.info("Updating cover overlays!");
+
     //@ts-ignore
-    const overlays = firebot.overlay.getConfigsOfType(
+    const overlays = firebot.overlay.widgets.getConfigsOfType(
       `${AIMP_PLUGIN_ID}:cover-art`,
     );
 
     for (const overlay of overlays) {
       //@ts-ignore
-      firebot.overlay.setWidgetState(
+      firebot.overlay.widgets.setWidgetState(
         overlay.id,
-        { url: meta.aimpTrackCoverArtUrl },
+        { id: meta.aimpTrackCoverArtId, url: meta.aimpTrackCoverArtUrl },
         true,
       );
     }
-  };
-
-  #bindFirebotEvent = <T extends TypedEmitter<any>>(
-    emitter: T,
-    mapping: Record<string, FirebotEvent>,
-  ) => {
-    const handlers = new Map<
-      string,
-      (meta?: Record<string, unknown>) => void
-    >();
-
-    for (const [event, firebotEvent] of Object.entries(mapping)) {
-      const handler = (meta?: Record<string, unknown>) =>
-        firebot.events.trigger(AIMP_PLUGIN_ID, firebotEvent, meta);
-
-      handlers.set(event, handler);
-      emitter.on(event, handler);
-    }
-
-    return () => {
-      for (const [event, handler] of handlers) {
-        emitter.off(event, handler);
-      }
-    };
   };
 }

@@ -97,7 +97,10 @@ export class TrackService extends TypedEmitter<Events> {
       this.#trackInfo.coverArtId = coverArtId;
       this.emit(
         "cover-art-updated",
-        getCoverArtMetadata(this.#getCoverArtUrl(coverArtId)),
+        getCoverArtMetadata(
+          coverArtId ?? "default",
+          this.#getCoverArtUrl(coverArtId),
+        ),
       );
     }
   }

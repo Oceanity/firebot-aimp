@@ -2,22 +2,37 @@ import firebot, { ReplaceVariable } from "@crowbartools/firebot-types";
 import {
   AIMP_PLUGIN_ID,
   AIMP_PLUGIN_PLAYER_VARIABLE_PREFIX,
+  AIMP_PLUGIN_TRACK_VARIABLE_PREFIX,
 } from "./constants";
 import { FirebotEvent } from "./enums";
 import { AIMPTrackReplaceVariable } from "./replace-variables/aimp-track";
 
+type ReplaceVariableType =
+  | ReplaceVariable["definition"]["possibleDataOutput"][number]
+  | ReplaceVariable["definition"]["possibleDataOutput"];
+
+const trackVariableDefinitions: [
+  FirebotEvent,
+  string,
+  string,
+  ReplaceVariableType,
+][] = [
+  [FirebotEvent.TitleChanged, "Title", "Title", "text"],
+  [FirebotEvent.ArtistChanged, "Artist", "Artist", "text"],
+  [FirebotEvent.AlbumChanged, "Album", "Album", "text"],
+  [FirebotEvent.CoverArtChanged, "CoverArtUrl", "Url of the Cover Art", "text"],
+];
+
 export const AllAIMPVariables: ReplaceVariable[] = [
   AIMPTrackReplaceVariable,
 
-  buildAIMPVariable(
-    "aimpTrackCoverArtUrl",
-    "The Cover Art of the currently playing track",
-    [
-      FirebotEvent.Connected,
-      FirebotEvent.TrackChanged,
-      FirebotEvent.CoverArtChanged,
-    ],
-    "text",
+  ...trackVariableDefinitions.map(([event, key, description, type]) =>
+    buildAIMPVariable(
+      `${AIMP_PLUGIN_TRACK_VARIABLE_PREFIX}${key}`,
+      `The ${description} of the currently playing track`,
+      [FirebotEvent.Connected, FirebotEvent.TrackChanged, event],
+      type,
+    ),
   ),
 
   ...buildPlayerPositionVariables([
@@ -30,9 +45,7 @@ function buildAIMPVariable(
   eventProperty: string,
   description: string,
   events: FirebotEvent[],
-  type:
-    | ReplaceVariable["definition"]["possibleDataOutput"][number]
-    | ReplaceVariable["definition"]["possibleDataOutput"],
+  type: ReplaceVariableType,
 ) {
   return firebot.variableFactory.createEventDataVariable({
     handle: eventProperty,
@@ -46,14 +59,7 @@ function buildAIMPVariable(
 function buildAIMPVariables(
   prefix: string,
   events: FirebotEvent[],
-  definitions: [
-    string,
-    string,
-    (
-      | ReplaceVariable["definition"]["possibleDataOutput"][number]
-      | ReplaceVariable["definition"]["possibleDataOutput"]
-    ),
-  ][],
+  definitions: [string, string, ReplaceVariableType][],
 ) {
   return definitions.map(([name, description, type]) => {
     const eventProperty = `${prefix}${name}`;

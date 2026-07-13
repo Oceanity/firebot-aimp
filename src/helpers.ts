@@ -74,8 +74,9 @@ export function getGenreMetadata(genre: string) {
   };
 }
 
-export function getCoverArtMetadata(coverArtUrl: string) {
+export function getCoverArtMetadata(coverArtId: string, coverArtUrl: string) {
   return {
+    [`${TRACK_PREFIX}CoverArtId`]: coverArtId,
     [`${TRACK_PREFIX}CoverArtUrl`]: coverArtUrl,
   };
 }
