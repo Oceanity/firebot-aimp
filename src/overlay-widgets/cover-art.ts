@@ -120,6 +120,12 @@ export const CoverArtOverlayWidget: OverlayWidgetType<Settings, State> = {
             const coverArt = document.getElementsByClassName(
               `oceanity-aimp-cover-art-${event.data.widgetConfig.id}`,
             )[0];
+
+            // Store previous to yoink out later
+            const previousImages = $(
+              `.oceanity-aimp-cover-art-${event.data.widgetConfig.id}`,
+            ).find(`img`);
+
             coverArt.insertAdjacentHTML("beforeend", newImage);
 
             const animation = event.data.widgetConfig.settings
@@ -135,21 +141,16 @@ export const CoverArtOverlayWidget: OverlayWidgetType<Settings, State> = {
               const duration = animationDuration
                 ? `${animationDuration}s`
                 : undefined;
-              // @ts-ignore
-              // eslint-disable-next-line
+
               $(`.oceanity-aimp-cover-art-${event.data.widgetConfig.id}`)
-                .find(
-                  `[data-id=${event.data.widgetConfig.state?.id ?? "default"}]`,
-                )
+                .find(`[data-id=${event.data.widgetConfig.state?.id}]`) //@ts-ignore
                 .animateCss(animationClass, duration, null, null, () => {
-                  // @ts-ignore
-                  // eslint-disable-next-line
-                  $(`.oceanity-aimp-cover-art-${event.data.widgetConfig.id}`)
-                    .find(
-                      `[data-id!=${event.data.widgetConfig.state?.id ?? "default"}]`,
-                    )
-                    .remove();
+                  previousImages.remove();
                 });
+            } else {
+              setTimeout(() => {
+                previousImages.remove();
+              }, 100);
             }
           } catch {}
           break;

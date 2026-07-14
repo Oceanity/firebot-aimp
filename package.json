@@ -14,8 +14,9 @@
   "author": "Oceanity",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@crowbartools/firebot-types": "^5.67.0-alpha29",
+    "@crowbartools/firebot-types": "^5.67.0-alpha30",
     "@types/jest": "^30.0.0",
+    "@types/jquery": "^4.0.1",
     "@types/node": "^22.20.1",
     "jest": "^30.0.0",
     "reconnecting-websocket": "^4.4.0",

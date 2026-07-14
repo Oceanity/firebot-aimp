@@ -71,7 +71,7 @@ export class AIMPState extends TypedEmitter<Events> {
   }
 
   #onConnected = async () => {
-    await this.#player.initialize();
+    await this.#player.fetchRemotePlayerInfo();
     await this.#track.initialize();
 
     firebot.logger.info(

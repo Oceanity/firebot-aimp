@@ -21,7 +21,11 @@ export class FirebotRemote {
     this.#unbindAIMPFirebotEvents = this.#bindFirebotEvent(this.#state, {
       ready: {
         event: FirebotEvent.Connected,
-        additionalHandlers: [this.#updateCoverArtOverlays],
+        additionalHandlers: [
+          this.#updateCoverArtOverlays,
+          this.#updateProgressBarOverlays,
+          this.#updatePositionDurationOverlays,
+        ],
       },
     });
 
@@ -35,7 +39,13 @@ export class FirebotRemote {
     this.#unbindPlayerFirebotEvents = this.#bindFirebotEvent(
       this.#state.player,
       {
-        "position-updated": { event: FirebotEvent.PositionChanged },
+        "position-updated": {
+          event: FirebotEvent.PositionChanged,
+          additionalHandlers: [
+            this.#updateProgressBarOverlays,
+            this.#updatePositionDurationOverlays,
+          ],
+        },
         "volume-updated": { event: FirebotEvent.VolumeChanged },
         "mute-updated": { event: FirebotEvent.MuteToggled },
         "repeat-updated": { event: FirebotEvent.RepeatToggled },
@@ -109,18 +119,53 @@ export class FirebotRemote {
       return;
     }
 
-    firebot.logger.info("Updating cover overlays!");
-
-    //@ts-ignore
     const overlays = firebot.overlay.widgets.getConfigsOfType(
       `${AIMP_PLUGIN_ID}:cover-art`,
     );
 
     for (const overlay of overlays) {
-      //@ts-ignore
       firebot.overlay.widgets.setWidgetState(
         overlay.id,
         { id: meta.aimpTrackCoverArtId, url: meta.aimpTrackCoverArtUrl },
+        true,
+      );
+    }
+  };
+
+  #updateProgressBarOverlays = (meta?: Record<string, unknown>) => {
+    if (!meta || !meta.aimpPlayerProgressPercent) {
+      return;
+    }
+
+    const overlays = firebot.overlay.widgets.getConfigsOfType(
+      `${AIMP_PLUGIN_ID}:player-progress-bar`,
+    );
+
+    for (const overlay of overlays) {
+      firebot.overlay.widgets.setWidgetState(
+        overlay.id,
+        { progress: meta.aimpPlayerProgressPercent },
+        true,
+      );
+    }
+  };
+
+  #updatePositionDurationOverlays = (meta?: Record<string, unknown>) => {
+    if (!meta || !meta.aimpPlayerPosition || !meta.aimpPlayerDuration) {
+      return;
+    }
+
+    const overlays = firebot.overlay.widgets.getConfigsOfType(
+      `${AIMP_PLUGIN_ID}:player-position-duration`,
+    );
+
+    for (const overlay of overlays) {
+      firebot.overlay.widgets.setWidgetState(
+        overlay.id,
+        {
+          position: meta.aimpPlayerPosition,
+          duration: meta.aimpPlayerDuration,
+        },
         true,
       );
     }

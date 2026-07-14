@@ -66,7 +66,7 @@ export class PlayerService extends TypedEmitter<Events> {
     };
   }
 
-  public async initialize() {
+  public async fetchRemotePlayerInfo() {
     const remotePlayerInfo = await this.#state.rest.fetchPlayerState();
     if (remotePlayerInfo) {
       this.updateInfo(remotePlayerInfo);
@@ -83,7 +83,7 @@ export class PlayerService extends TypedEmitter<Events> {
 
   public updatePosition(positionSeconds: number, durationSeconds?: number) {
     if (durationSeconds) {
-      this.#playerInfo.duration = getDurationString(positionSeconds);
+      this.#playerInfo.duration = getDurationString(durationSeconds);
       this.#playerInfo.durationSeconds = durationSeconds;
     }
 
@@ -92,34 +92,44 @@ export class PlayerService extends TypedEmitter<Events> {
     this.#playerInfo.progressPercent =
       this.#playerInfo.durationSeconds === 0
         ? 0
-        : positionSeconds / this.#playerInfo.durationSeconds;
+        : (positionSeconds / this.#playerInfo.durationSeconds) * 100;
 
     this.emit("position-updated", getPositionMetadata(this.#playerInfo));
   }
 
   public updateVolume(volume: number) {
-    this.#playerInfo.volume = volume;
-    this.emit("volume-updated", getVolumeMetadata(volume));
+    if (volume !== this.#playerInfo.volume) {
+      this.#playerInfo.volume = volume;
+      this.emit("volume-updated", getVolumeMetadata(volume));
+    }
   }
 
   public updateMute(mute: boolean) {
-    this.#playerInfo.mute = mute;
-    this.emit("mute-updated", getMuteMetadata(mute));
+    if (mute !== this.#playerInfo.mute) {
+      this.#playerInfo.mute = mute;
+      this.emit("mute-updated", getMuteMetadata(mute));
+    }
   }
 
   public updateRepeat(repeat: boolean) {
-    this.#playerInfo.repeat = repeat;
-    this.emit("repeat-updated", getRepeatMetadata(repeat));
+    if (repeat !== this.#playerInfo.repeat) {
+      this.#playerInfo.repeat = repeat;
+      this.emit("repeat-updated", getRepeatMetadata(repeat));
+    }
   }
 
   public updateShuffle(shuffle: boolean) {
-    this.#playerInfo.shuffle = shuffle;
-    this.emit("shuffle-updated", getShuffleMetadata(shuffle));
+    if (shuffle !== this.#playerInfo.shuffle) {
+      this.#playerInfo.shuffle = shuffle;
+      this.emit("shuffle-updated", getShuffleMetadata(shuffle));
+    }
   }
 
   public updateState(state: PlaybackState) {
     const stateString = PlaybackStateStrings[state];
-    this.#playerInfo.state = stateString;
-    this.emit("state-updated", getStateMetadata(stateString));
+    if (stateString !== this.#playerInfo.state) {
+      this.#playerInfo.state = stateString;
+      this.emit("state-updated", getStateMetadata(stateString));
+    }
   }
 }

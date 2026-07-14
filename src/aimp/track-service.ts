@@ -91,6 +91,9 @@ export class TrackService extends TypedEmitter<Events> {
     this.#trackInfo.bitrate = trackInfo.bitrate;
     this.#trackInfo.sampleRate = trackInfo.sample_rate;
 
+    // Ask player to update to grab new duration
+    await this.#state.player.fetchRemotePlayerInfo();
+
     // Grab art Id
     const coverArtId = await this.#fetchCoverArtId();
     if (this.#trackInfo.coverArtId !== coverArtId) {
