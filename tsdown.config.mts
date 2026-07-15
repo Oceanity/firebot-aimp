@@ -36,6 +36,7 @@ export default defineConfig({
   // Allow importing .html files as strings and .webp as binary
   loader: {
     ".html": "text",
+    ".css": "text",
     ".webp": "binary",
   },
 });

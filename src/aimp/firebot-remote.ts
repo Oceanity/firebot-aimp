@@ -2,6 +2,7 @@ import firebot from "@crowbartools/firebot-types";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { AIMP_PLUGIN_ID } from "../constants";
 import { FirebotEvent } from "../enums";
+import { aimp } from "../main";
 import { AIMPState } from "./aimp-state";
 
 /**
@@ -25,6 +26,7 @@ export class FirebotRemote {
           this.#updateCoverArtOverlays,
           this.#updateProgressBarOverlays,
           this.#updatePositionDurationOverlays,
+          this.#updateTrackInfoOverlays,
         ],
       },
     });
@@ -44,6 +46,7 @@ export class FirebotRemote {
           additionalHandlers: [
             this.#updateProgressBarOverlays,
             this.#updatePositionDurationOverlays,
+            this.#updateTrackInfoOverlays,
           ],
         },
         "volume-updated": { event: FirebotEvent.VolumeChanged },
@@ -60,6 +63,10 @@ export class FirebotRemote {
       "cover-art-updated": {
         event: FirebotEvent.CoverArtChanged,
         additionalHandlers: [this.#updateCoverArtOverlays],
+      },
+      "track-updated": {
+        event: FirebotEvent.TrackChanged,
+        additionalHandlers: [this.#updateTrackInfoOverlays],
       },
     });
   }
@@ -145,6 +152,20 @@ export class FirebotRemote {
       firebot.overlay.widgets.setWidgetState(
         overlay.id,
         { progress: meta.aimpPlayerProgressPercent },
+        true,
+      );
+    }
+  };
+
+  #updateTrackInfoOverlays = () => {
+    const overlays = firebot.overlay.widgets.getConfigsOfType(
+      `${AIMP_PLUGIN_ID}:track-info`,
+    );
+
+    for (const overlay of overlays) {
+      firebot.overlay.widgets.setWidgetState(
+        overlay.id,
+        { ...aimp.player.meta, ...aimp.track.meta },
         true,
       );
     }

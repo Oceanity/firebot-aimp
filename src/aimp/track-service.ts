@@ -106,6 +106,8 @@ export class TrackService extends TypedEmitter<Events> {
         ),
       );
     }
+
+    this.emit("track-updated", { ...this.#state.player.meta, ...this.meta });
   }
 
   public getCoverArt(id?: string): StoredCover | null {
