@@ -74,12 +74,14 @@ export class AIMPWebsocketClient extends TypedEmitter<SocketEvents> {
       };
 
       this.#socket.onclose = () => {
-        firebot.logger.warn(
-          `AIMP disconnected, attempting to reconnect in ${Math.floor(AIMP_PLUGIN_RECONNECT_TIMEOUT_MS / 1000)} seconds...`,
-        );
+        if (this.#isConnected) {
+          firebot.logger.warn(
+            `AIMP disconnected, attempting to reconnect in ${Math.floor(AIMP_PLUGIN_RECONNECT_TIMEOUT_MS / 1000)} seconds...`,
+          );
 
-        this.#isConnected = false;
-        this.emit("disconnected");
+          this.#isConnected = false;
+          this.emit("disconnected");
+        }
       };
 
       this.#socket.onerror = (event: ErrorEvent) => {

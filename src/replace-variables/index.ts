@@ -85,7 +85,8 @@ function buildAIMPVariable(
   events: FirebotEvent[],
   type: ReplaceVariableType,
 ) {
-  return firebot.variableFactory.createEventDataVariable({
+  //@ts-expect-error(2339)
+  return firebot.factories.variables.createEventDataVariable({
     handle: eventProperty,
     description,
     events: events.map((event) => `${AIMP_PLUGIN_ID}:${event}`),

@@ -3,7 +3,7 @@
   "displayName": "AIMP",
   "pluginOutputName": "oceanityAIMP",
   "version": "1.0.0",
-  "description": "Adds integrations with AIMP using the Fluke AIMP Remote Control plugin",
+  "description": "Allows Firebot to control AIMP and read live data about the currently playing track. Includes Overlay Widgets to show track details and cover art on stream.",
   "main": "",
   "scripts": {
     "build": "tsdown",
