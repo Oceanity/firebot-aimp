@@ -53,6 +53,7 @@ export class FirebotRemote {
         "mute-updated": { event: FirebotEvent.MuteToggled },
         "repeat-updated": { event: FirebotEvent.RepeatToggled },
         "shuffle-updated": { event: FirebotEvent.ShuffleToggled },
+        "state-updated": { event: FirebotEvent.StateUpdated },
       },
     );
 

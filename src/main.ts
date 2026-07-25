@@ -54,8 +54,8 @@ const plugin: Plugin<AIMPPluginSettings> = {
   onParameterUpdate: async (context) => {
     await connect(context);
   },
-  onUnload: async (context) => {
-    disconnect();
+  onUnload: async () => {
+    await disconnect();
   },
 };
 
@@ -71,9 +71,9 @@ async function connect(context: PluginContext<AIMPPluginSettings>) {
   }
 }
 
-function disconnect() {
+async function disconnect() {
   if (aimp) {
-    aimp.close();
+    await aimp.close();
   }
 }
 

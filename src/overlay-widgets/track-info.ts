@@ -37,7 +37,7 @@ export const TrackInfoOverlayWidget: OverlayWidgetType<Settings, State> = {
       default: {
         family: "Inter",
         weight: 600,
-        size: 48,
+        size: 24,
         italic: false,
         color: "#FFFFFF",
       },
@@ -60,8 +60,8 @@ The following fields will automatically get replaced with their corresponding CS
       type: "codemirror",
       default: `{{containerClass}} {
   display: flex;
-  width: 100%;
-  height: 100%;
+  flex: 1;
+  box-sizing: border-box;
   flex-direction: column;
 }
 
@@ -169,7 +169,7 @@ The following fields are available:
 
         let styleMarkup = `<style>${cssTemplate.replaceAll("{{containerClass}}", `.oceanity-aimp-track-information-${config.id}`)}</style>`;
 
-        let htmlLayout = `${styleMarkup}<div class="oceanity-aimp-track-information-${config.id}" style="${utils.stylesToString(containerStyles)}">
+        let htmlLayout = `<div class="oceanity-aimp-track-information-${config.id}" style="${utils.stylesToString(containerStyles)}">
                   ${htmlTemplate}
                 </div>`;
 
@@ -188,7 +188,7 @@ The following fields are available:
           );
         }
 
-        return htmlLayout;
+        return `${styleMarkup}${htmlLayout}`;
       };
 
       switch (event.name) {
@@ -216,6 +216,9 @@ The following fields are available:
             }
           }
 
+          break;
+        case "remove":
+          utils.removeWidget();
           break;
       }
       // - \`{{coverArt}}\`: Pre-made Cover Art widget that will automatically cycle

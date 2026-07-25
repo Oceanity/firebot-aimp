@@ -28,7 +28,7 @@ export enum FirebotEvent {
   Connected = "connected",
   Disconnected = "disconnected",
   MuteToggled = "mute-changed",
-  PlayerState = "player-state",
+  StateUpdated = "player-state",
   PositionChanged = "position-position",
   RepeatToggled = "repeat-changed",
   ShuffleToggled = "shuffle-changed",

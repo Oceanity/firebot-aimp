@@ -26,7 +26,7 @@ export const AIMPPluginEventSource: EventSource = {
         "When you disconnect from the AIMP client or connection is lost",
     },
     {
-      id: FirebotEvent.PlayerState,
+      id: FirebotEvent.StateUpdated,
       name: "Player State Changed",
       description: "When one or more aspects of the player state are changed",
     },

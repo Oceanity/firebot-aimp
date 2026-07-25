@@ -88,7 +88,6 @@ export class AIMPWebsocketClient extends TypedEmitter<SocketEvents> {
         );
 
         this.#isConnected = false;
-        this.emit("disconnected");
       };
 
       this.#socket.onmessage = async (event: MessageEvent) => {

@@ -3,30 +3,68 @@ import {
   AIMP_PLUGIN_ID,
   AIMP_PLUGIN_PLAYER_VARIABLE_PREFIX,
   AIMP_PLUGIN_TRACK_VARIABLE_PREFIX,
-} from "./constants";
-import { FirebotEvent } from "./enums";
-import { AIMPTrackReplaceVariable } from "./replace-variables/aimp-track";
+} from "../constants";
+import { FirebotEvent } from "../enums";
+import { AIMPPlayerReplaceVariable } from "./aimp-player";
+import { AIMPTrackReplaceVariable } from "./aimp-track";
+import { AIMPIsConnectedReplaceVariable } from "./is-connected";
 
 type ReplaceVariableType =
   | ReplaceVariable["definition"]["possibleDataOutput"][number]
   | ReplaceVariable["definition"]["possibleDataOutput"];
 
-const trackVariableDefinitions: [
-  FirebotEvent,
-  string,
-  string,
-  ReplaceVariableType,
-][] = [
-  [FirebotEvent.TitleChanged, "Title", "Title", "text"],
-  [FirebotEvent.ArtistChanged, "Artist", "Artist", "text"],
-  [FirebotEvent.AlbumChanged, "Album", "Album", "text"],
-  [FirebotEvent.CoverArtChanged, "CoverArtUrl", "Url of the Cover Art", "text"],
+type SpecialtyReplaceVarDefinition = {
+  event: FirebotEvent;
+  key: string;
+  description: string;
+  type: ReplaceVariableType;
+};
+
+const playerVariableDefinitions: SpecialtyReplaceVarDefinition[] = [
+  {
+    event: FirebotEvent.StateUpdated,
+    key: "PlayerState",
+    description:
+      "The playback state of the player, will be `playing`, `paused` or `stopped`",
+    type: "text",
+  },
+];
+
+const trackVariableDefinitions: SpecialtyReplaceVarDefinition[] = [
+  {
+    event: FirebotEvent.TitleChanged,
+    key: "Title",
+    description: "The Title of the currently playing track",
+    type: "text",
+  },
+  {
+    event: FirebotEvent.ArtistChanged,
+    key: "Artist",
+    description: "The Artist of the currently playing track",
+    type: "text",
+  },
+  {
+    event: FirebotEvent.AlbumChanged,
+    key: "Album",
+    description: "The Album of the currently playing track",
+    type: "text",
+  },
+  {
+    event: FirebotEvent.CoverArtChanged,
+    key: "CoverArtUrl",
+    description: "The Url of the Cover Art of the currently playing track",
+    type: "text",
+  },
 ];
 
 export const AllAIMPVariables: ReplaceVariable[] = [
+  AIMPIsConnectedReplaceVariable,
+  AIMPPlayerReplaceVariable,
   AIMPTrackReplaceVariable,
 
-  ...trackVariableDefinitions.map(([event, key, description, type]) =>
+  ...buildPlayerVariables([FirebotEvent.Connected, FirebotEvent.StateUpdated]),
+
+  ...trackVariableDefinitions.map(({ event, key, description, type }) =>
     buildAIMPVariable(
       `${AIMP_PLUGIN_TRACK_VARIABLE_PREFIX}${key}`,
       `The ${description} of the currently playing track`,
@@ -67,7 +105,18 @@ function buildAIMPVariables(
   });
 }
 
-function buildPlayerPositionVariables(events: Array<FirebotEvent>) {
+function buildPlayerVariables(events: FirebotEvent[]) {
+  return buildAIMPVariables(AIMP_PLUGIN_PLAYER_VARIABLE_PREFIX, events, [
+    ["Volume", "The volume of the player from 0.0-100.0", "number"],
+    [
+      "State",
+      "The playback state of the player, will be `playing`, `paused` or `stopped`",
+      "text",
+    ],
+  ]);
+}
+
+function buildPlayerPositionVariables(events: FirebotEvent[]) {
   return buildAIMPVariables(AIMP_PLUGIN_PLAYER_VARIABLE_PREFIX, events, [
     [
       "Position",

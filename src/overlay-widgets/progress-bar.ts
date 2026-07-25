@@ -3,6 +3,7 @@ import { OverlayWidgetType } from "@crowbartools/firebot-types";
 type Settings = {
   borderRadius: number;
   padding: number;
+  barHeight: number;
   barColor: string;
   trackColor: string;
 };
@@ -24,7 +25,15 @@ export const PlayerProgressBarOverlayWidget: OverlayWidgetType<
     width: 25,
     height: 2,
   },
+  onOverlayMessage: (config, message, data) => {},
   settingsSchema: [
+    {
+      name: "barHeight",
+      title: "Bar Height (px)",
+      description:
+        "How tall the bar is (must be equal to or less than the Widget height, will be Widget Height if not set)",
+      type: "number",
+    },
     {
       name: "borderRadius",
       title: "Corner Radius (px)",
@@ -69,8 +78,8 @@ export const PlayerProgressBarOverlayWidget: OverlayWidgetType<
   overlayExtension: {
     eventHandler: (event, utils) => {
       const { progress } = event.data.widgetConfig.state as State;
-      const { borderRadius, padding, barColor, trackColor } = event.data
-        .widgetConfig.settings as Settings;
+      const { barHeight, borderRadius, padding, barColor, trackColor } = event
+        .data.widgetConfig.settings as Settings;
 
       const generateWidgetHtml = (
         config: (typeof event)["data"]["widgetConfig"],
@@ -80,7 +89,7 @@ export const PlayerProgressBarOverlayWidget: OverlayWidgetType<
           display: "flex",
           padding: `${padding ?? 0}px`,
           width: "100%",
-          height: "100%",
+          height: `${!!barHeight ? `${barHeight}px` : "100%"}`,
           "box-sizing": "border-box",
           "border-radius": `${borderRadius ?? 0}px`,
           overflow: "hidden",
