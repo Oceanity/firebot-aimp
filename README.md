@@ -13,11 +13,11 @@ Install the [Latest release of the Fluke Server AIMP Plugin](https://github.com/
 - In Firebot, go to Tools > Plugin Manager or Settings > Plugins & Scripts
   - Enable Plugins & Scripts if they are currently disabled
   - Click "Install From File"
-  - Navigate to where you downloaded `oceanityAimp.js` and select that file
+  - Navigate to where you downloaded `oceanityAIMP.js` and select that file
   - Confirm that you want to install the plugin
   - If you are running AIMP on a different PC than Firebot, change the AIMP Server Hostname to the IP Address of the PC AIMP is running on
 
 ### Updating
 
-- Overwrite existing `oceanityAimp.js` with new version
+- Overwrite existing `oceanityAIMP.js` with new version
 - Restart Firebot
