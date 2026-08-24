@@ -1,39 +1,23 @@
-# Starter Firebot Plugin
+# AIMP for Firebot
 
-A template for building [Firebot](https://firebot.app) plugins (formerly known as "startup scripts") in TypeScript, bundled with [tsdown](https://tsdown.dev).
+This is a [Firebot](https://firebot.app) Plugin that allows Firebot to control AIMP and read live data about the currently playing track. Includes Overlay Widgets to show track details and cover art on stream.
 
-> [!IMPORTANT]
-> This template targets the new plugin API that only works with **Firebot v5.67.0 or newer**. Earlier versions of Firebot are not supported.
+![Demo](demo.webp)
+
+### Prerequisite
+
+Install the [Latest release of the Fluke Server AIMP Plugin](https://github.com/ReitanSora/fluke-server/releases/latest) by downloading the .aimppack file and opening it with AIMP. This Plugin uses that to communicate with AIMP.
 
 ### Setup
 
-1. Create a new repo based off this template (click "Use this Template" above) or fork it.
-2. `npm install`
+- In Firebot, go to Tools > Plugin Manager or Settings > Plugins & Scripts
+  - Enable Plugins & Scripts if they are currently disabled
+  - Click "Install From File"
+  - Navigate to where you downloaded `oceanityAimp.js` and select that file
+  - Confirm that you want to install the plugin
+  - If you are running AIMP on a different PC than Firebot, change the AIMP Server Hostname to the IP Address of the PC AIMP is running on
 
-### Building
+### Updating
 
-```
-npm run build
-```
-
-The compiled plugin is written to `dist/<pluginOutputName>.js` as a single file.
-
-### Installing in Firebot
-1. Run `npm run build:dev`. This builds the plugin and automatically copies the `.js` file into Firebot's `scripts/` folder.
-2. In Firebot, open the plugin manager, click Install, and select your plugins `.js` file in your `scripts/` folder.
-
-During development you can rerun `npm run build:dev` to have the latest code rebuilt and copied over again.
-
-If Firebot is running, the command will also instruct Firebot to reload the plugin automatically as a form of hot-reload.
-
-### Testing
-
-```
-npm test
-```
-
-### Notes
-
-- Keep the plugin definition object (the one with `manifest`, `parametersSchema`, and `onLoad`) in `src/main.ts`. The build minifies output but preserves function names, which Firebot relies on to load the plugin.
-- `@crowbartools/firebot-types` is treated as an external dependency and is provided by Firebot at runtime - it is not bundled into your output.
-- Edit the `"pluginOutputName"` property in `package.json` to change the filename of the built plugin.
+- Overwrite existing `oceanityAimp.js` with new version
+- Restart Firebot
