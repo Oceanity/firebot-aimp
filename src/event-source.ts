@@ -5,8 +5,8 @@ import { FirebotEvent } from "./enums";
 const trackDataChangeDefinitions: [FirebotEvent, string][] = [
   [FirebotEvent.TitleChanged, "Title"],
   [FirebotEvent.ArtistChanged, "Artist"],
-  [FirebotEvent.AlbumChanged, "Album Changed"],
-  [FirebotEvent.CoverArtChanged, "Cover Art Changed"],
+  [FirebotEvent.AlbumChanged, "Album"],
+  [FirebotEvent.CoverArtChanged, "Cover Art"],
 ];
 
 export const AIMPPluginEventSource: EventSource = {
