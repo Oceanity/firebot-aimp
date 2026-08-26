@@ -85,7 +85,6 @@ function buildAIMPVariable(
   events: FirebotEvent[],
   type: ReplaceVariableType,
 ) {
-  //@ts-expect-error(2339)
   return firebot.factories.variables.createEventDataVariable({
     handle: eventProperty,
     description,
