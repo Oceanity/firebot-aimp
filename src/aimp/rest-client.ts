@@ -3,8 +3,11 @@ import { createHash } from "crypto";
 import { HOSTNAME_REGEX } from "../constants";
 import { ChangePlaybackMode, RestEndpoint, ToggleBooleanMode } from "../enums";
 import {
+  NextTrackResponse,
   PlaybackState,
   PlayerInfo as PlayerState,
+  PreviousTrackResponse,
+  SetSeekResponse,
   SetVolumeResponse,
   StoredCover,
   ToggleBooleanResponse,
@@ -134,6 +137,30 @@ export class AIMPRestClient {
     return false;
   }
 
+  async nextTrack(): Promise<boolean> {
+    const response = await this.#post<NextTrackResponse>(
+      RestEndpoint.NextTrack,
+    );
+
+    return response?.status === "ok";
+  }
+
+  async previousTrack(): Promise<boolean> {
+    const response = await this.#post<PreviousTrackResponse>(
+      RestEndpoint.PreviousTrack,
+    );
+
+    return response?.status === "ok";
+  }
+
+  async seek(position: number): Promise<boolean> {
+    const response = await this.#post<SetSeekResponse>(RestEndpoint.Seek, {
+      position,
+    });
+
+    return response?.status === "ok";
+  }
+
   async setVolume(volume: number): Promise<boolean> {
     // gonna get the CLAMPS
     volume = Math.max(0, Math.min(100, volume));
@@ -197,6 +224,8 @@ export class AIMPRestClient {
     body?: Record<string, any>,
   ): Promise<T | null> => {
     const url = this.#getEndpointUrl(endpoint);
+
+    firebot.logger.info(url);
 
     try {
       const response = await fetch(url, {

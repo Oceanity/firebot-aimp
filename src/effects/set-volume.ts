@@ -26,14 +26,29 @@ export const SetVolumeEffectType: EffectType<EffectModel> = {
     return errors;
   },
   onTriggerEvent: async ({ effect }) => {
-    if (!effect.volume) {
-      firebot.logger.warn("No 'mode' provided to Change Playback State");
+    try {
+      if (!effect.volume) {
+        throw new Error("No 'volume' provided to Set Volume");
+      }
+
+      const volumeInt = parseInt(effect.volume);
+      if (isNaN(volumeInt)) {
+        throw new Error(
+          `Invalid 'volume' ${effect.volume} provided to Set Volume`,
+        );
+      }
+
+      const success = await aimp.rest.setVolume(volumeInt);
+
+      return {
+        success,
+      };
+    } catch (error) {
+      firebot.logger.warn((error as Error).message);
+
+      return {
+        success: false,
+      };
     }
-
-    const success = await aimp.rest.setVolume(parseInt(effect.volume));
-
-    return {
-      success,
-    };
   },
 };

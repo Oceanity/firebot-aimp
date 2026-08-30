@@ -24,6 +24,11 @@ export enum ToggleBooleanMode {
   Toggle = "toggle",
 }
 
+export enum SkipMode {
+  Next = "next",
+  Previous = "previous",
+}
+
 export enum FirebotEvent {
   Connected = "connected",
   Disconnected = "disconnected",
