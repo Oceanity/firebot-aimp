@@ -2,7 +2,7 @@
   "name": "firebot-aimp",
   "displayName": "AIMP",
   "pluginOutputName": "oceanityAIMP",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Allows Firebot to control AIMP and read live data about the currently playing track. Includes Overlay Widgets to show track details and cover art on stream.",
   "main": "",
   "scripts": {
@@ -18,7 +18,7 @@
     "@types/jest": "^30.0.0",
     "@types/jquery": "^4.0.1",
     "@types/node": "^22.20.1",
-    "jest": "^30.0.0",
+    "jest": "^30.5.0",
     "reconnecting-websocket": "^4.4.0",
     "tiny-typed-emitter": "^2.1.0",
     "ts-jest": "^29.4.12",
@@ -30,6 +30,7 @@
     "node": "24.10.0"
   },
   "allowScripts": {
-    "unrs-resolver@1.12.2": true
+    "unrs-resolver@1.12.2": true,
+    "@parcel/watcher@2.6.0": true
   }
 }
